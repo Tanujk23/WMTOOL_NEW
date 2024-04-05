@@ -37,6 +37,25 @@ router.post("/get-all-projects", authMiddleware, async (req, res) => {
   }
 });
 
+//get projects by role
+router.post("/get-projects-by-role", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    const projects = await Project.find({ "members.user": userId }).sort({
+      createdAt: -1,
+    });
+    res.send({
+      success: true,
+      data: projects,
+    });
+  } catch (error) {
+    res.send({
+      error: error.message,
+      success: false,
+    });
+  }
+});
+
 //edit a project
 router.post("/edit-project", authMiddleware, async (req, res) => {
   try {
