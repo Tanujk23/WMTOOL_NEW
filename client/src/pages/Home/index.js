@@ -40,7 +40,7 @@ function Home() {
       <div className="grid grid-cols-4 gap-5 mt-5">
         {projects.map((project) => (
           <div className="flex flex-col gap-1 border border-solid border-gray-400 rounded-md p-2 cursor-pointer" 
-          onClick={()=> navigate('/project/${project._id}')}>
+          onClick={()=> navigate(`/project/${project._id}`)}>
             <h1 className="text-primary text-lg uppercase font-semibold">
               {project.name}
             </h1>
