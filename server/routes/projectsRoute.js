@@ -43,7 +43,7 @@ router.post("/get-projects-by-role", authMiddleware, async (req, res) => {
     const userId = req.body.userId;
     const projects = await Project.find({ "members.user": userId }).sort({
       createdAt: -1,
-    });
+    }).populate("owner");
     res.send({
       success: true,
       data: projects,
