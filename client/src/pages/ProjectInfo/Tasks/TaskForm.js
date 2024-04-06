@@ -1,12 +1,43 @@
-import { Form, Input, Modal } from "antd";
+import { Form, Input, Modal, message } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import React from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { SetLoading } from "../../../redux/loadersSlice";
+import { CreateTask } from "../../../apicalls/tasks";
 
-function TaskForm({ showTaskForm, setShowTaskForm, project }) {
+function TaskForm({ showTaskForm, setShowTaskForm, project, task }) {
   const formRef = React.useRef(null);
+  const { user } = useSelector((state) => state.users);
+  const dispatch = useDispatch();
   const [email, setEmail] = React.useState(null);
-  const onFinish = (values) => {
-    console.log("success: ", values);
+  const onFinish = async (values) => {
+    try {
+      let response = null;
+      dispatch(SetLoading(true));
+      if (task) {
+        //update task
+      } else {
+        const assingedToMember = project.members.find(
+          (member) => member.user.email === email
+        );
+        const assingedToUserId = assingedToMember.user._id;
+        const assingedBy = user._id;
+        response = await CreateTask({
+          ...values,
+          project: project._id,
+          assingedTo: assingedToUserId,
+          assingedBy,
+        });
+      }
+      if (response.success) {
+        message.success(response.message);
+        setShowTaskForm(false);
+      }
+      dispatch(SetLoading(false));
+    } catch (error) {
+      dispatch(SetLoading(false));
+      message.error(error.message);
+    }
   };
 
   const validateEmail = () => {
