@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const Project = require("../models/projectModel");
 const authMiddleware = require("../middlewares/authMiddleware");
+const User = require("../models/userModel");
 
 //create a project
 router.post("/create-project", authMiddleware, async (req, res) => {
@@ -40,7 +41,9 @@ router.post("/get-all-projects", authMiddleware, async (req, res) => {
 //get project by id
 router.post("/get-project-by-id", authMiddleware, async (req, res) => {
   try {
-    const project = await Project.findById(req.body._id).populate("owner").populate("members.user");
+    const project = await Project.findById(req.body._id)
+      .populate("owner")
+      .populate("members.user");
     res.send({
       success: true,
       data: project,
@@ -97,6 +100,38 @@ router.post("/delete-project", authMiddleware, async (req, res) => {
     res.send({
       success: true,
       message: "Project deleted successfully",
+    });
+  } catch (error) {
+    res.send({
+      error: error.message,
+      success: false,
+    });
+  }
+});
+
+//add a member to the project
+router.post("/add-member", authMiddleware, async (req, res) => {
+  try {
+    const { email, role, projectId } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.send({
+        success: false,
+        message: "User not found",
+      });
+    }
+    await Project.findByIdAndUpdate(projectId, {
+      $push: {
+        members: {
+          user: user._id,
+          role,
+        },
+      },
+    });
+
+    res.send({
+      success: true,
+      message: "Member added successfully",
     });
   } catch (error) {
     res.send({
