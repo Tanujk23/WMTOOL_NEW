@@ -71,7 +71,7 @@ function ProjectInfo() {
             <Tasks />
           </Tabs.TabPane>
           <Tabs.TabPane tab="Members" key="2">
-            <Members />
+            <Members project={project} />
           </Tabs.TabPane>
         </Tabs>
       </div>
