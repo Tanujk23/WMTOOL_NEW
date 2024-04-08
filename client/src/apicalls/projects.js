@@ -14,3 +14,5 @@ export const GetProjectsByRole = async (userId) =>
   apiRequest("post", "/api/projects/get-projects-by-role", { userId });
 export const AddMemberToProject = async (data) =>
   apiRequest("post", "/api/projects/add-member", data);
+export const RemoveMemberFromProject = async (data) =>
+  apiRequest("post", "/api/projects/remove-member", data);

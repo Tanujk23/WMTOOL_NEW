@@ -9,7 +9,9 @@ import Divider from "../../components/Divider";
 import Tasks from "./Tasks";
 import Members from "./Members";
 
+
 function ProjectInfo() {
+  
   const [currentUserRole, setCurrentUserRole] = useState("");
   const { user } = useSelector((state) => state.users);
   const [project, setProject] = useState(null);
@@ -35,6 +37,8 @@ function ProjectInfo() {
       message.error(error.message);
     }
   };
+
+  
 
   useEffect(() => {
     getData();
