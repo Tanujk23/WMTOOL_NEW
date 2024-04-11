@@ -26,10 +26,17 @@ router.post("/create-task", authMiddleware, async (req, res) => {
 //get all tasks
 router.post("/get-all-tasks", authMiddleware, async (req, res) => {
   try {
-    const tasks = await Task.find(req.body.filters)
+    Object.keys(req.body).forEach((key) => {
+      if (req.body[key] === "all") {
+        delete req.body[key];
+      }
+    });
+    delete req.body["userId"];
+    const tasks = await Task.find(req.body)
       .populate("assingedTo")
       .populate("assingedBy")
-      .populate("project");
+      .populate("project")
+      .sort({ createdAt: -1 });
     res.send({
       success: true,
       message: "Tasks fetched successfully",

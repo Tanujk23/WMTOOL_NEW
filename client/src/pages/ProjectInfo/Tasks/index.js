@@ -1,13 +1,19 @@
 import { Button, Table, message, Modal } from "antd";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import TaskForm from "./TaskForm";
 import { GetAllTasks, DeleteTask, UpdateTask } from "../../../apicalls/tasks";
 import { useDispatch, useSelector } from "react-redux";
 import { SetLoading } from "../../../redux/loadersSlice";
 import { getDateFormat } from "../../../utils/helpers";
-import Divider from "../../../components/Divider"
+import Divider from "../../../components/Divider";
+import { AddNotification } from "../../../apicalls/notifications";
 
 function Tasks({ project }) {
+  const [filters, setFilters] = useState({
+    status: "all",
+    assingedBy: "all",
+    assingedTo: "all",
+  });
   const [showViewTask, setShowViewTask] = React.useState(false);
   const { user } = useSelector((state) => state.users);
   const [tasks, setTasks] = React.useState(null);
@@ -21,7 +27,7 @@ function Tasks({ project }) {
   const getTasks = async () => {
     try {
       dispatch(SetLoading(true));
-      const response = await GetAllTasks({ project: project._id });
+      const response = await GetAllTasks({ project: project._id, ...filters });
       dispatch(SetLoading(false));
       if (response.success) {
         setTasks(response.data);
@@ -51,16 +57,22 @@ function Tasks({ project }) {
     }
   };
 
-  const onStatusUpdate = async (id, status) => {
+  const onStatusUpdate = async ({ task, status }) => {
     try {
       dispatch(SetLoading(true));
       const response = await UpdateTask({
-        _id: id,
+        _id: task._id,
         status,
       });
       if (response.success) {
         getTasks();
         message.success(response.message);
+        AddNotification({
+          title: "Task status Updated",
+          description: `${task.name} status has been updated to ${status}`,
+          user: task.assingedBy._id,
+          onClick: `/project/${project._id}`,
+        });
       } else {
         throw new Error(response.message);
       }
@@ -105,7 +117,7 @@ function Tasks({ project }) {
     },
     {
       title: "Assinged On",
-      dataIndex: "assingedOn",
+      dataIndex: "createdAt",
       render: (text, record) => getDateFormat(text),
     },
     {
@@ -115,7 +127,12 @@ function Tasks({ project }) {
         return (
           <select
             value={record.status}
-            onChange={(e) => onStatusUpdate(record._id, e.target.value)}
+            onChange={(e) => {
+              onStatusUpdate({
+                task: record,
+                status: e.target.value,
+              });
+            }}
             disabled={record.assingedTo._id !== user._id && isEmployee}
           >
             <option value="pending">Pending</option>
@@ -162,6 +179,10 @@ function Tasks({ project }) {
     columns.pop();
   }
 
+  useEffect(() => {
+    getTasks();
+  }, [filters]);
+
   return (
     <div>
       {!isEmployee && (
@@ -171,6 +192,70 @@ function Tasks({ project }) {
           </Button>
         </div>
       )}
+
+      <div className="flex gap-5">
+        <div>
+          <span>Status</span>
+          <select
+            value={filters.status}
+            onChange={(e) => {
+              setFilters({
+                ...filters,
+                status: e.target.value,
+              });
+            }}
+          >
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="inprogress">In Progress</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+
+        <div>
+          <span>Assinged By</span>
+          <select
+            value={filters.assingedBy}
+            onChange={(e) => {
+              setFilters({
+                ...filters,
+                assingedBy: e.target.value,
+              });
+            }}
+          >
+            <option value="all">All</option>
+            {project.members
+              .filter((m) => m.role === "admin" || m.role === "owner")
+              .map((m) => (
+                <option value={m.user._id}>
+                  {m.user.firstName + " " + m.user.lastName}
+                </option>
+              ))}
+          </select>
+        </div>
+
+        <div>
+          <span>Assinged To</span>
+          <select
+            value={filters.assingedTo}
+            onChange={(e) => {
+              setFilters({
+                ...filters,
+                assingedTo: e.target.value,
+              });
+            }}
+          >
+            <option value="all">All</option>
+            {project.members
+              .filter((m) => m.role === "employee")
+              .map((m) => (
+                <option value={m.user._id}>
+                  {m.user.firstName + " " + m.user.lastName}
+                </option>
+              ))}
+          </select>
+        </div>
+      </div>
 
       <Table columns={columns} dataSource={tasks} className="mt-5" />
 
@@ -192,9 +277,15 @@ function Tasks({ project }) {
           footer={null}
           width={700}
         >
-          <Divider/>
-          <h1 className="text-xl text-primary">{task.name}</h1>
-          <span className='text=[14px] text-gray-500'>{task.description}</span>
+          <Divider />
+          <div className="flex flex-col">
+            <span className="text-md text-primary font-semibold">
+              {task.name}
+            </span>
+            <span className="text=[14px] text-gray-500">
+              {task.description}
+            </span>
+          </div>
         </Modal>
       )}
     </div>
