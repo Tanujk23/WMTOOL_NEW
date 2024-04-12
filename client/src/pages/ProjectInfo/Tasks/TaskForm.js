@@ -17,26 +17,27 @@ function TaskForm({
   const formRef = React.useRef(null);
   const { user } = useSelector((state) => state.users);
   const dispatch = useDispatch();
-  const [email, setEmail] = React.useState(null);
+  const [email, setEmail] = React.useState("");
+  const [images = [], setImages] = React.useState(task?.attachments || []);
   const [file = null, setFile] = React.useState(null);
 
   const onFinish = async (values) => {
     try {
       let response = null;
-      const assingedToMember = project.members.find(
-        (member) => member.user.email === email
-      );
-      const assingedToUserId = assingedToMember.user._id;
       dispatch(SetLoading(true));
       if (task) {
         //update task
         response = await UpdateTask({
           ...values,
           project: project._id,
-          _id: task._id,
           assingedTo: task.assingedTo._id,
+          _id: task._id,
         });
       } else {
+        const assingedToMember = project.members.find(
+          (member) => member.user.email === email
+        );
+        const assingedToUserId = assingedToMember.user._id;
         const assingedBy = user._id;
         response = await CreateTask({
           ...values,
@@ -48,6 +49,10 @@ function TaskForm({
       if (response.success) {
         if (!task) {
           //send notification to the assinged employee
+          const assingedToMember = project.members.find(
+            (member) => member.user.email === email
+          );
+          const assingedToUserId = assingedToMember.user._id;
           AddNotification({
             title: `You have been assinged a new task in ${project.name}`,
             user: assingedToUserId,
@@ -86,6 +91,7 @@ function TaskForm({
       const response = await UploadImage(formData);
       if (response.success) {
         message.success(response.message);
+        setImages([...images, response.data]);
         reloadData();
       } else {
         throw new Error(response.message);
@@ -94,6 +100,28 @@ function TaskForm({
     } catch (error) {
       dispatch(SetLoading(false));
       message.error(error.message);
+    }
+  };
+
+  const deleteImage = async (image) => {
+    try {
+      dispatch(SetLoading(true));
+      const attachments = images.filter((img) => img !== image);
+      const response = await UpdateTask({
+        ...task,
+        attachments,
+      });
+      if (response.success) {
+        message.success(response.message);
+        setImages(attachments);
+        reloadData();
+      } else {
+        throw new Error(response.message);
+      }
+      dispatch(SetLoading(false));
+    } catch (error) {
+      message.error(error.message);
+      dispatch(SetLoading(false));
     }
   };
 
@@ -144,6 +172,23 @@ function TaskForm({
           </Form>
         </Tabs.TabPane>
         <Tabs.TabPane tab="Attachments" key="2" disabled={!task}>
+          <div className="flex gap-5 mb-5">
+            {images.map((image) => {
+              return (
+                <div className="flex gap-3 p-2 border-solid border-gray-300 rounded items-end">
+                  <img
+                    src={image}
+                    alt=""
+                    className="w-20 h-20 object-cover mt-2"
+                  />
+                  <i
+                    className="ri-delete-bin-line"
+                    onClick={() => deleteImage(image)}
+                  ></i>
+                </div>
+              );
+            })}
+          </div>
           <Upload
             beforeUpload={() => false}
             onChange={(info) => {
@@ -154,7 +199,7 @@ function TaskForm({
             <Button type="dashed">Uplaod Images</Button>
           </Upload>
           <div className="flex justify-end mt-4 gap-5">
-            <Button type="default" onClick={()=>setShowTaskForm(false)}>
+            <Button type="default" onClick={() => setShowTaskForm(false)}>
               Cancel
             </Button>
             <Button type="primary" onClick={uplaodImage} disabled={!file}>

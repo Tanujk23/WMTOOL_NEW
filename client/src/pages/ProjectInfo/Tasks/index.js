@@ -285,6 +285,18 @@ function Tasks({ project }) {
             <span className="text=[14px] text-gray-500">
               {task.description}
             </span>
+
+            <div className="flex gap-5">
+              {task.attachments.map((image) => {
+                return (
+                  <img
+                    src={image}
+                    alt=""
+                    className="w-40 h-40 object-cover mt-2 p-2 border-solid border-gray-3 00 rounded"
+                  />
+                );
+              })}
+            </div>
           </div>
         </Modal>
       )}

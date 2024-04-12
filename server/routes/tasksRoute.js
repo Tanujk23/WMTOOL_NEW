@@ -4,6 +4,8 @@ const Task = require("../models/taskModel");
 const Project = require("../models/projectModel");
 const User = require("../models/userModel");
 const authMiddleware = require("../middlewares/authMiddleware");
+const cloudinary = require("../config/cloudinaryConfig");
+const multer = require("multer");
 
 //create a task
 router.post("/create-task", authMiddleware, async (req, res) => {
@@ -81,5 +83,45 @@ router.post("/delete-task", authMiddleware, async (req, res) => {
     });
   }
 });
+
+//create multer storage
+const storage = multer.diskStorage({
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + file.originalname);
+  },
+});
+
+router.post(
+  "/upload-image",
+  authMiddleware,
+  multer({ storage: storage }).single("file"),
+  async (req, res) => {
+    try {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folders: "tasks",
+      });
+      const imageURL = result.secure_url;
+      await Task.findOneAndUpdate(
+        { _id: req.body.taskId },
+        {
+          $push: {
+            attachments: imageURL,
+          },
+        }
+      );
+
+      res.send({
+        success: true,
+        message: "Image uploaded successfully",
+        data: imageURL,
+      });
+    } catch (error) {
+      res.send({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+);
 
 module.exports = router;
