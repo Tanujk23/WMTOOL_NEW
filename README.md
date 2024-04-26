@@ -31,6 +31,8 @@ This repository contains the source code for a robust work management applicatio
 
 To get a local copy up and running follow these simple steps.
 
+You can see a running UI Demo in [Demo.mp4](./Demo.mp4)
+
 ### Prerequisites
 - Node.js
 - npm
@@ -41,4 +43,4 @@ npm start
 
 npx nodemon server/server.js
 ```
-You can see a Demo in [Demo.py](./Demo.mp4)
+
