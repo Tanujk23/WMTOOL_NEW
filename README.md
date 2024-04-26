@@ -41,4 +41,4 @@ npm start
 
 npx nodemon server/server.js
 ```
-You can see a Demo in Demo.py
+You can see a Demo in [Demo.py](./Demo.mp4)
